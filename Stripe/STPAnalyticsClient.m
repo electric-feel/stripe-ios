@@ -57,12 +57,12 @@
 
         // Individual views
 
-        [STPPaymentCardTextField stp_aspect_hookSelector:@selector(commonInit)
-                                             withOptions:STPAspectPositionAfter
-                                              usingBlock:^{
-                                                  STPAnalyticsClient *client = [self sharedClient];
-                                                  [client setApiUsage:[client.apiUsage setByAddingObject:NSStringFromClass([STPPaymentCardTextField class])]];
-                                              } error:nil];
+        /* [STPPaymentCardTextField stp_aspect_hookSelector:@selector(commonInit) */
+        /*                                      withOptions:STPAspectPositionAfter */
+        /*                                       usingBlock:^{ */
+        /*                                           STPAnalyticsClient *client = [self sharedClient]; */
+        /*                                           [client setApiUsage:[client.apiUsage setByAddingObject:NSStringFromClass([STPPaymentCardTextField class])]]; */
+        /*                                       } error:nil]; */
 
         // Pay context
 
