@@ -44,9 +44,6 @@
     sourceParams.rawTypeString = @"bancontact";
     XCTAssertEqual(sourceParams.type, STPSourceTypeBancontact);
 
-    sourceParams.rawTypeString = @"bitcoin";
-    XCTAssertEqual(sourceParams.type, STPSourceTypeBitcoin);
-
     sourceParams.rawTypeString = @"card";
     XCTAssertEqual(sourceParams.type, STPSourceTypeCard);
 
@@ -68,6 +65,15 @@
     sourceParams.rawTypeString = @"alipay";
     XCTAssertEqual(sourceParams.type, STPSourceTypeAlipay);
 
+    sourceParams.rawTypeString = @"p24";
+    XCTAssertEqual(sourceParams.type, STPSourceTypeP24);
+
+    sourceParams.rawTypeString = @"eps";
+    XCTAssertEqual(sourceParams.type, STPSourceTypeEPS);
+
+    sourceParams.rawTypeString = @"multibanco";
+    XCTAssertEqual(sourceParams.type, STPSourceTypeMultibanco);
+
     sourceParams.rawTypeString = @"unknown";
     XCTAssertEqual(sourceParams.type, STPSourceTypeUnknown);
 
@@ -81,9 +87,6 @@
 
     sourceParams.type = STPSourceTypeBancontact;
     XCTAssertEqualObjects(sourceParams.rawTypeString, @"bancontact");
-
-    sourceParams.type = STPSourceTypeBitcoin;
-    XCTAssertEqualObjects(sourceParams.rawTypeString, @"bitcoin");
 
     sourceParams.type = STPSourceTypeCard;
     XCTAssertEqualObjects(sourceParams.rawTypeString, @"card");
@@ -105,6 +108,15 @@
 
     sourceParams.type = STPSourceTypeAlipay;
     XCTAssertEqualObjects(sourceParams.rawTypeString, @"alipay");
+
+    sourceParams.type = STPSourceTypeP24;
+    XCTAssertEqualObjects(sourceParams.rawTypeString, @"p24");
+
+    sourceParams.type = STPSourceTypeEPS;
+    XCTAssertEqualObjects(sourceParams.rawTypeString, @"eps");
+
+    sourceParams.type = STPSourceTypeMultibanco;
+    XCTAssertEqualObjects(sourceParams.rawTypeString, @"multibanco");
 
     sourceParams.type = STPSourceTypeUnknown;
     XCTAssertNil(sourceParams.rawTypeString);
@@ -171,15 +183,15 @@
     card.number = @"4242 4242 4242 4242";
     card.cvc = @"123";
     card.expMonth = 6;
-    card.expYear = 2018;
+    card.expYear = 2024;
     card.currency = @"usd";
     card.name = @"Jenny Rosen";
-    card.addressLine1 = @"123 Fake Street";
-    card.addressLine2 = @"Apartment 4";
-    card.addressCity = @"New York";
-    card.addressState = @"NY";
-    card.addressCountry = @"USA";
-    card.addressZip = @"10002";
+    card.address.line1 = @"123 Fake Street";
+    card.address.line2 = @"Apartment 4";
+    card.address.city = @"New York";
+    card.address.state = @"NY";
+    card.address.country = @"USA";
+    card.address.postalCode = @"10002";
 
     STPSourceParams *source = [STPSourceParams cardParamsWithCard:card];
     NSDictionary *sourceCard = source.additionalAPIParameters[@"card"];
@@ -189,13 +201,38 @@
     XCTAssertEqualObjects(sourceCard[@"exp_year"], @(card.expYear));
     XCTAssertEqualObjects(source.owner[@"name"], card.name);
     NSDictionary *sourceAddress = source.owner[@"address"];
-    XCTAssertEqualObjects(sourceAddress[@"line1"], card.addressLine1);
-    XCTAssertEqualObjects(sourceAddress[@"line2"], card.addressLine2);
-    XCTAssertEqualObjects(sourceAddress[@"city"], card.addressCity);
-    XCTAssertEqualObjects(sourceAddress[@"state"], card.addressState);
-    XCTAssertEqualObjects(sourceAddress[@"postal_code"], card.addressZip);
-    XCTAssertEqualObjects(sourceAddress[@"country"], card.addressCountry);
+    XCTAssertEqualObjects(sourceAddress[@"line1"], card.address.line1);
+    XCTAssertEqualObjects(sourceAddress[@"line2"], card.address.line2);
+    XCTAssertEqualObjects(sourceAddress[@"city"], card.address.city);
+    XCTAssertEqualObjects(sourceAddress[@"state"], card.address.state);
+    XCTAssertEqualObjects(sourceAddress[@"postal_code"], card.address.postalCode);
+    XCTAssertEqualObjects(sourceAddress[@"country"], card.address.country);
 }
+
+- (void)testParamsWithVisaCheckout {
+    STPSourceParams *params = [STPSourceParams visaCheckoutParamsWithCallId:@"12345678"];
+
+    XCTAssertEqual(params.type, STPSourceTypeCard);
+    NSDictionary *sourceCard = params.additionalAPIParameters[@"card"];
+    XCTAssertNotNil(sourceCard);
+    NSDictionary *sourceVisaCheckout = sourceCard[@"visa_checkout"];
+    XCTAssertNotNil(sourceVisaCheckout);
+    XCTAssertEqualObjects(sourceVisaCheckout[@"callid"], @"12345678");
+}
+
+- (void)testParamsWithMasterPass {
+    STPSourceParams *params = [STPSourceParams masterpassParamsWithCartId:@"12345678"
+                                                            transactionId:@"87654321"];
+
+    XCTAssertEqual(params.type, STPSourceTypeCard);
+    NSDictionary *sourceCard = params.additionalAPIParameters[@"card"];
+    XCTAssertNotNil(sourceCard);
+    NSDictionary *sourceMasterpass = sourceCard[@"masterpass"];
+    XCTAssertNotNil(sourceMasterpass);
+    XCTAssertEqualObjects(sourceMasterpass[@"cart_id"], @"12345678");
+    XCTAssertEqualObjects(sourceMasterpass[@"transaction_id"], @"87654321");
+}
+
 
 #pragma mark - Redirect Dictionary Tests
 

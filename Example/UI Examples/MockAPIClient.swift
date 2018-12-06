@@ -12,7 +12,7 @@ import Stripe
 private let swizzle: (AnyClass, Selector, Selector) -> () = { forClass, originalSelector, swizzledSelector in
     let originalMethod = class_getInstanceMethod(forClass, originalSelector)
     let swizzledMethod = class_getInstanceMethod(forClass, swizzledSelector)
-    method_exchangeImplementations(originalMethod, swizzledMethod)
+    method_exchangeImplementations(originalMethod!, swizzledMethod!)
 }
 
 
@@ -27,11 +27,11 @@ extension STPAddCardViewController {
     }
 
     // Expose the private `apiClient` property as a method
-    func apiClient() -> STPAPIClient? {
+    @objc func apiClient() -> STPAPIClient? {
         return nil
     }
 
-    func swizzled_apiClient() -> STPAPIClient? {
+    @objc func swizzled_apiClient() -> STPAPIClient? {
         return MockAPIClient()
     }
 }
@@ -47,11 +47,11 @@ class MockAPIClient: STPAPIClient {
         cardJSON["exp_month"] = "\(card.expMonth)"
         cardJSON["exp_year"] = "\(card.expYear)"
         cardJSON["name"] = card.name
-        cardJSON["address_line1"] = card.addressLine1
-        cardJSON["address_line2"] = card.addressLine2
-        cardJSON["address_state"] = card.addressState
-        cardJSON["address_zip"] = card.addressZip
-        cardJSON["address_country"] = card.addressCountry
+        cardJSON["address_line1"] = card.address.line1
+        cardJSON["address_line2"] = card.address.line2
+        cardJSON["address_state"] = card.address.state
+        cardJSON["address_zip"] = card.address.postalCode
+        cardJSON["address_country"] = card.address.country
         cardJSON["last4"] = card.last4()
         if let number = card.number {
             let brand = STPCardValidator.brand(forNumber: number)

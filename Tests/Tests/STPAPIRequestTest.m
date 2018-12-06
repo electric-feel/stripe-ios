@@ -12,6 +12,7 @@
 
 #import "STPAPIRequest.h"
 
+#import "NSError+Stripe.h"
 #import "STPAPIClient.h"
 #import "STPAPIClient+Private.h"
 #import "STPTestUtils.h"
@@ -48,6 +49,14 @@
     STPAPIClient *apiClientMock = OCMClassMock([STPAPIClient class]);
     OCMStub([apiClientMock apiURL]).andReturn([NSURL URLWithString:@"https://api.stripe.com"]);
     OCMStub([apiClientMock urlSession]).andReturn(urlSessionMock);
+    OCMStub([apiClientMock configuredRequestForURL:[OCMArg isKindOfClass:[NSURL class]]]).andDo(^(NSInvocation *invocation)
+                                                                                                {
+                                                                                                    NSURL *urlArg;
+                                                                                                    [invocation getArgument:&urlArg atIndex:2];
+                                                                                                    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:urlArg];
+                                                                                                    [invocation setReturnValue:&request];
+                                                                                                    [invocation retainArguments];
+                                                                                                });
 
     id apiRequestMock = OCMClassMock([STPAPIRequest class]);
     OCMStub([apiRequestMock parseResponse:[OCMArg any]
@@ -62,7 +71,7 @@
     // Perform request
     NSString *endpoint = @"endpoint";
     NSDictionary *parameters = @{@"key": @"value"};
-    STPCard *deserializer = [[STPCard alloc] init];
+    STPCard *deserializer = [STPCard new];
 
     NSURLSessionDataTask *task = [STPAPIRequest postWithAPIClient:apiClientMock
                                                          endpoint:endpoint
@@ -116,6 +125,14 @@
     STPAPIClient *apiClientMock = OCMClassMock([STPAPIClient class]);
     OCMStub([apiClientMock apiURL]).andReturn([NSURL URLWithString:@"https://api.stripe.com"]);
     OCMStub([apiClientMock urlSession]).andReturn(urlSessionMock);
+    OCMStub([apiClientMock configuredRequestForURL:[OCMArg isKindOfClass:[NSURL class]]]).andDo(^(NSInvocation *invocation)
+                                                                                                {
+                                                                                                    NSURL *urlArg;
+                                                                                                    [invocation getArgument:&urlArg atIndex:2];
+                                                                                                    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:urlArg];
+                                                                                                    [invocation setReturnValue:&request];
+                                                                                                    [invocation retainArguments];
+                                                                                                });
 
     id apiRequestMock = OCMClassMock([STPAPIRequest class]);
     OCMStub([apiRequestMock parseResponse:[OCMArg any]
@@ -130,7 +147,7 @@
     // Perform request
     NSString *endpoint = @"endpoint";
     NSDictionary *parameters = @{@"key": @"value"};
-    STPCard *deserializer = [[STPCard alloc] init];
+    STPCard *deserializer = [STPCard new];
 
     NSURLSessionDataTask *task = [STPAPIRequest getWithAPIClient:apiClientMock
                                                         endpoint:endpoint
@@ -184,6 +201,14 @@
     STPAPIClient *apiClientMock = OCMClassMock([STPAPIClient class]);
     OCMStub([apiClientMock apiURL]).andReturn([NSURL URLWithString:@"https://api.stripe.com"]);
     OCMStub([apiClientMock urlSession]).andReturn(urlSessionMock);
+    OCMStub([apiClientMock configuredRequestForURL:[OCMArg isKindOfClass:[NSURL class]]]).andDo(^(NSInvocation *invocation)
+                                                                        {
+                                                                            NSURL *urlArg;
+                                                                            [invocation getArgument:&urlArg atIndex:2];
+                                                                            NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:urlArg];
+                                                                            [invocation setReturnValue:&request];
+                                                                            [invocation retainArguments];
+                                                                        });
 
     id apiRequestMock = OCMClassMock([STPAPIRequest class]);
     OCMStub([apiRequestMock parseResponse:[OCMArg any]
@@ -198,7 +223,7 @@
     // Perform request
     NSString *endpoint = @"endpoint";
     NSDictionary *parameters = @{@"key": @"value"};
-    STPCard *deserializer = [[STPCard alloc] init];
+    STPCard *deserializer = [STPCard new];
 
     NSURLSessionDataTask *task = [STPAPIRequest deleteWithAPIClient:apiClientMock
                                                            endpoint:endpoint
@@ -352,7 +377,7 @@
     [self waitForExpectationsWithTimeout:2.0 handler:nil];
 }
 
-- (void)testParseResponseWithReturnedError {
+- (void)testParseResponseWithReturnedErrorOneDeserializer {
     XCTestExpectation *expectation = [self expectationWithDescription:@"parseResponse"];
 
     NSHTTPURLResponse *httpURLResponse = [[NSHTTPURLResponse alloc] init];
@@ -366,6 +391,35 @@
     NSData *body = [NSJSONSerialization dataWithJSONObject:json options:(NSJSONWritingOptions)kNilOptions error:nil];
     NSError *errorParameter = nil;
     NSArray *deserializers = @[[STPCard new]];
+
+    [STPAPIRequest parseResponse:httpURLResponse
+                            body:body
+                           error:errorParameter
+                   deserializers:deserializers
+                      completion:^(id<STPAPIResponseDecodable> object, NSHTTPURLResponse *response, NSError *error) {
+                          XCTAssertNil(object);
+                          XCTAssertEqualObjects(response, httpURLResponse);
+                          XCTAssertEqualObjects(error, [NSError stp_errorFromStripeResponse:json]);
+                          [expectation fulfill];
+                      }];
+
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+}
+
+- (void)testParseResponseWithReturnedErrorMultipleDeserializers {
+    XCTestExpectation *expectation = [self expectationWithDescription:@"parseResponse"];
+
+    NSHTTPURLResponse *httpURLResponse = [[NSHTTPURLResponse alloc] init];
+    NSDictionary *json = @{
+                           @"error": @{
+                                   @"type": @"invalid_request_error",
+                                   @"message": @"Your card number is incorrect.",
+                                   @"code": @"incorrect_number",
+                                   }
+                           };
+    NSData *body = [NSJSONSerialization dataWithJSONObject:json options:(NSJSONWritingOptions)kNilOptions error:nil];
+    NSError *errorParameter = nil;
+    NSArray *deserializers = @[[STPCard new], [STPSource new]];
 
     [STPAPIRequest parseResponse:httpURLResponse
                             body:body

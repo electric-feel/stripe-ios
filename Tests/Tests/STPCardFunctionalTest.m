@@ -20,14 +20,14 @@
 
     card.number = @"4242 4242 4242 4242";
     card.expMonth = 6;
-    card.expYear = 2018;
+    card.expYear = 2024;
     card.currency = @"usd";
-    card.addressLine1 = @"123 Fake Street";
-    card.addressLine2 = @"Apartment 4";
-    card.addressCity = @"New York";
-    card.addressState = @"NY";
-    card.addressCountry = @"USA";
-    card.addressZip = @"10002";
+    card.address.line1 = @"123 Fake Street";
+    card.address.line2 = @"Apartment 4";
+    card.address.city = @"New York";
+    card.address.state = @"NY";
+    card.address.country = @"USA";
+    card.address.postalCode = @"10002";
 
     STPAPIClient *client = [[STPAPIClient alloc] initWithPublishableKey:@"pk_test_vOo1umqsYxSrP5UXfOeL3ecm"];
 
@@ -42,7 +42,7 @@
 
                          XCTAssertNotNil(token.tokenId);
                          XCTAssertEqual(6U, token.card.expMonth);
-                         XCTAssertEqual(2018U, token.card.expYear);
+                         XCTAssertEqual(2024U, token.card.expYear);
                          XCTAssertEqualObjects(@"4242", token.card.last4);
                          XCTAssertEqualObjects(@"usd", token.card.currency);
                      }];
@@ -54,7 +54,7 @@
 
     card.number = @"4242 4242 4242 4241";
     card.expMonth = 6;
-    card.expYear = 2018;
+    card.expYear = 2024;
 
     STPAPIClient *client = [[STPAPIClient alloc] initWithPublishableKey:@"pk_test_vOo1umqsYxSrP5UXfOeL3ecm"];
 
@@ -68,7 +68,32 @@
                          XCTAssertEqual(error.code, 70);
                          XCTAssertEqualObjects(error.domain, StripeDomain);
                          XCTAssertEqualObjects(error.userInfo[STPErrorParameterKey], @"number");
-                         XCTAssertNil(token, @"token should not be nil: %@", token.description);
+                         XCTAssertNil(token, @"token should be nil: %@", token.description);
+                     }];
+    [self waitForExpectationsWithTimeout:5.0f handler:nil];
+}
+
+- (void)testCardTokenCreationWithExpiredCard {
+    STPCardParams *card = [[STPCardParams alloc] init];
+
+    card.number = @"4242 4242 4242 4242";
+    card.expMonth = 6;
+    card.expYear = 2013;
+
+    STPAPIClient *client = [[STPAPIClient alloc] initWithPublishableKey:@"pk_test_vOo1umqsYxSrP5UXfOeL3ecm"];
+
+    XCTestExpectation *expectation = [self expectationWithDescription:@"Card creation"];
+
+    [client createTokenWithCard:card
+                     completion:^(STPToken *token, NSError *error) {
+                         [expectation fulfill];
+
+                         XCTAssertNotNil(error, @"error should not be nil");
+                         XCTAssertEqual(error.code, 70);
+                         XCTAssertEqualObjects(error.domain, StripeDomain);
+                         XCTAssertEqualObjects(error.userInfo[STPCardErrorCodeKey], STPInvalidExpYear);
+                         XCTAssertEqualObjects(error.userInfo[STPErrorParameterKey], @"expYear");
+                         XCTAssertNil(token, @"token should be nil: %@", token.description);
                      }];
     [self waitForExpectationsWithTimeout:5.0f handler:nil];
 }
@@ -78,7 +103,7 @@
 
     card.number = @"4242 4242 4242 4242";
     card.expMonth = 6;
-    card.expYear = 2018;
+    card.expYear = 2024;
 
     STPAPIClient *client = [[STPAPIClient alloc] initWithPublishableKey:@"not_a_valid_key_asdf"];
 

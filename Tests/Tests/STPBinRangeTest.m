@@ -11,10 +11,10 @@
 
 @interface STPBINRange(Testing)
 
-@property(nonatomic)NSUInteger length;
-@property(nonatomic)NSString *qRangeLow;
-@property(nonatomic)NSString *qRangeHigh;
-@property(nonatomic)STPCardBrand brand;
+@property (nonatomic) NSUInteger length;
+@property (nonatomic) NSString *qRangeLow;
+@property (nonatomic) NSString *qRangeHigh;
+@property (nonatomic) STPCardBrand brand;
 
 - (BOOL)matchesNumber:(NSString *)number;
 
@@ -123,6 +123,7 @@
                            @(STPCardBrandDiscover),
                            @(STPCardBrandJCB),
                            @(STPCardBrandDinersClub),
+                           @(STPCardBrandUnionPay),
                            @(STPCardBrandUnknown)];
     for (NSNumber *brand in allBrands) {
         NSArray<STPBINRange *> *binRanges = [STPBINRange binRangesForBrand:brand.integerValue];
